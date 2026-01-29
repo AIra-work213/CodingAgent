@@ -1,5 +1,5 @@
-# Multi-stage build for Coding Agents SDLC
-FROM python:3.12-slim AS builder
+# Single-stage build for Coding Agents SDLC
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
@@ -9,37 +9,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies to system location (not --user)
+# Install Python dependencies to system location
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Final stage
-FROM python:3.12-slim
-
-# Set working directory
-WORKDIR /app
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Python dependencies from builder (system-wide)
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+# Ensure /usr/local/bin is accessible and binaries are executable
+RUN chmod -R 755 /usr/local/bin && \
+    chmod +x /usr/local/bin/uvicorn /usr/local/bin/gunicorn 2>/dev/null || true
 
 # Expose port
 EXPOSE 8000
