@@ -416,7 +416,30 @@ services:
 
 ## Remote Deployment Guides
 
-### 1. Ngrok (5 минут)
+### 1. Localtunnel (2 минуты, РЕКОМЕНДУЕТСЯ)
+
+**Преимущества:** Бесплатно, без регистрации, мгновенный старт
+
+```bash
+# Установка localtunnel (один раз)
+npm install -g localtunnel
+
+# Или используйте готовый скрипт
+./scripts/tunnel.sh
+
+# Ручной запуск tunnel
+lt --port 8000
+# Получите URL: https://random-name.loca.lt
+
+# Или с фиксированным поддоменом (если доступен)
+lt --port 8000 --subdomain my-coding-agent
+
+# CLI (авто)
+export CODING_AGENT_SERVER=https://random-name.loca.lt
+coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
+```
+
+### 2. Ngrok (5 минут, альтернатива)
 ```bash
 # Сервер
 docker-compose up -d
@@ -427,7 +450,7 @@ export CODING_AGENT_SERVER=https://abc123.ngrok.io
 coding-agent run --repo ...
 ```
 
-### 2. Yandex Cloud / cloud.ru
+### 3. Yandex Cloud / cloud.ru
 ```bash
 # Docker push + Cloud Run/Functions
 docker tag app:latest cr.yandex/ycr/<project>/coding-agent:latest
@@ -451,8 +474,8 @@ export CODING_AGENT_SERVER=https://coding-agent.yourdomain.com
 
 ### Real-time Remote Dashboard
 ```
-┌─ Remote: https://abc123.ngrok.io ─ Task #7b4f ───────┐
-│ 🔴 Server: https://abc123.ngrok.io [✓ Healthy]      │
+┌─ Remote: https://abc123.loca.lt ─ Task #7b4f ───────┐
+│ 🔴 Server: https://abc123.loca.lt [✓ Healthy]      │
 │ Latency: 45ms | Region: EU                           │
 ├──────────────────────────────────────────────────────┤
 │ Status: [Iteration 3/5] Code Review... 92%           │
@@ -463,7 +486,8 @@ export CODING_AGENT_SERVER=https://coding-agent.yourdomain.com
 ### Connection Status Indicators
 ```
 🟢 LOCAL   - localhost:8000 (0ms)
-🟡 REMOTE  - https://abc123.ngrok.io (45ms)  
+🟡 REMOTE  - https://abc123.loca.lt (45ms)
+🟡 REMOTE  - https://abc123.ngrok.io (50ms)
 🔴 OFFLINE - No server connection
 ```
 
@@ -504,6 +528,10 @@ coding-agent server health --server https://...
     "local": {
       "url": "http://localhost:8000"
     },
+    "localtunnel": {
+      "url": "https://abc123.loca.lt",
+      "tokens": ["ghp_xxx"]
+    },
     "ngrok": {
       "url": "https://abc123.ngrok.io",
       "tokens": ["ghp_xxx"]
@@ -522,11 +550,12 @@ coding-agent server health --server https://...
 ### ✅ Remote Server Requirements
 ```
 [ ] /health endpoint → 200 OK
-[ ] HTTPS termination (ngrok/cloud)
-[ ] CORS headers для CLI domains
+[ ] HTTPS termination (localtunnel/ngrok/cloud)
+[ ] CORS headers настроены для всех origins (*)
 [ ] Rate limiting (100 req/min per IP)
 [ ] Token validation middleware
 [ ] Redis persistence (cloud Redis)
+[ ] WebSocket support через tunnel
 ```
 
 ### ✅ CLI Remote Testing
@@ -541,16 +570,26 @@ coding-agent server health --server https://...
 ## Демо Remote Workflow
 
 ```bash
-# 1. Развернуть сервер (любой VPS/ngrok)
+# 1. Развернуть сервер (любой VPS)
 $ docker-compose up -d
-$ ngrok http 8000  # https://abc123.ngrok.io
 
-# 2. На любом ПК (даже без Docker)
+# 2. Запустить tunnel (localtunnel - бесплатно, без регистрации)
+$ lt --port 8000  # https://random-name.loca.lt
+
+# Или с помощью скрипта
+$ ./scripts/tunnel.sh
+
+# 3. На любом ПК (даже без Docker)
 $ pipx install coding-agents-cli
-$ export CODING_AGENT_SERVER=https://abc123.ngrok.io
+$ export CODING_AGENT_SERVER=https://random-name.loca.lt
 $ coding-agent run --repo myrepo --issue 1 --token ghp_...
 
-# 3. Live dashboard работает remotely!
+# 4. Live dashboard работает remotely!
 ```
 
 **Теперь CLI полностью поддерживает remote servers** с автоматическим обнаружением, безопасным хранением токенов, real-time dashboard и graceful reconnection.
+
+**Поддержка tunneling сервисов:**
+- ✅ **localtunnel** (рекомендуется) - бесплатно, без регистрации
+- ✅ **ngrok** - популярная альтернатива
+- ✅ **VPS/Cloud** - Yandex Cloud, cloud.ru, любые VPS

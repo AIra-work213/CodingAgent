@@ -23,7 +23,7 @@ ssh user@your-server.com
 curl -fsSL https://get.docker.com | sh
 
 # Клонировать репозиторий
-git clone <repo-url>
+git clone https://github.com/AIra-work213/CodingAgent
 cd CodingAgent
 
 # Создать .env файл
@@ -54,12 +54,17 @@ curl http://localhost:8000/health
 **Для доступа извне (опционально):**
 
 ```bash
-# Вариант A: ngrok (быстро, для тестирования)
+# Вариант A: localtunnel (бесплатно, без регистрации, рекомендуется)
+npm install -g localtunnel
+lt --port 8000
+# Получите URL вида: https://random-name.loca.lt
+
+# Вариант B: ngrok (альтернатива, требует регистрацию)
 apt install ngrok  # или скачать с ngrok.com
 ngrok http 8000
 # Получите URL вида: https://abc123.ngrok.io
 
-# Вариант B: свой домен (для production)
+# Вариант C: свой домен (для production)
 # Настроить Nginx reverse proxy с SSL
 ```
 
@@ -90,10 +95,10 @@ pip install click rich httpx websockets
 
 ```bash
 # С нового ПК - проверить, что сервер доступен
-curl https://your-server.com/health
+curl https://cold-words-rescue.loca.lt/health
 
 # Или через CLI (если установлен как пакет)
-coding-agent server status --server https://your-server.com
+coding-agent server status --server https://cold-words-rescue.loca.lt
 ```
 
 #### Шаг 4: Создание GitHub токена на новом ПК
@@ -428,7 +433,31 @@ export CODING_AGENT_SERVER=https://my-agent.example.com
 coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
 ```
 
-### Использование с ngrok (для тестирования)
+### Использование с localtunnel (для тестирования)
+
+**Localtunnel - это бесплатный сервис туннелирования без регистрации:**
+
+```bash
+# На сервере - установка localtunnel (один раз)
+npm install -g localtunnel
+
+# Запуск tunnel
+lt --port 8000
+# Получите URL: https://random-name.loca.lt
+
+# На клиенте
+export CODING_AGENT_SERVER=https://random-name.loca.lt
+coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
+```
+
+**Преимущества localtunnel:**
+- ✅ Полностью бесплатный
+- ✅ Не требует регистрации
+- ✅ Мгновенный старт
+- ✅ Поддержка WebSocket
+- ✅ Автоматический HTTPS
+
+### Использование с ngrok (альтернатива)
 
 ```bash
 # На сервере

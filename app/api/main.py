@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, status, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -96,6 +97,31 @@ app = FastAPI(
     description="Автоматизированная система генерации и рецензирования кода на базе LangGraph и OpenRouter",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# ============================================================================
+# CORS Middleware - для работы с localtunnel, ngrok и remote servers
+# ============================================================================
+
+# Поддержка всех origins для разработки и tunneling сервисов
+# Localtunnel использует случайные поддомены (*.loca.lt)
+# Ngrok использует случайные поддомены (*.ngrok.io, *.ngrok-free.app)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "*",  # Разрешить все origins для tunneling сервисов
+        "http://localhost:*",
+        "http://127.0.0.1:*",
+        "http://0.0.0.0:*",
+        "https://*.loca.lt",  # localtunnel
+        "https://*.ngrok.io",  # ngrok
+        "https://*.ngrok-free.app",  # ngrok free tier
+        "http://*.localtunnel.me",  # старые localtunnel URL
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Подключение роутеров
