@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "127.0.0.1:8001:8001"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/coding_agents
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DEBUG=${DEBUG:-true}
+      - MAX_ITERATIONS=${MAX_ITERATIONS:-5}
+      - PUBLIC_URL=${PUBLIC_URL:-}
+      - SERVER_URL=${SERVER_URL:-http://localhost:8000}
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./app:/app/app
+      - ./github:/app/github
+    restart: unless-stopped
+    networks:
+      - coding-agents-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - coding-agents-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=coding_agents
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - coding-agents-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redis-data:
+  postgres-data:
+
+networks:
+  coding-agents-network:
+    driver: bridge

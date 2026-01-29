@@ -1,0 +1,44 @@
+# Core
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+pydantic-settings==2.6.0
+
+# LangChain & LangGraph
+langchain==0.3.7
+langchain-openai==0.2.5
+langchain-community==0.3.5
+langgraph==0.2.45
+langgraph-checkpoint==2.0.4
+
+# GitHub
+PyGithub==2.4.0
+python-dotenv==1.0.1
+
+# Database & Storage
+redis==5.2.0
+sqlalchemy==2.0.35
+asyncpg==0.30.0
+alembic==1.13.3
+
+# HTTP & API
+httpx==0.27.2
+aiohttp==3.10.11
+websockets==13.1
+sse-starlette==2.1.3
+aiofiles==24.1.0
+python-multipart==0.0.12
+
+# Code Quality
+ruff==0.7.4
+black==24.10.0
+mypy==1.12.1
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# Utils
+click==8.1.7
+rich==13.9.4
