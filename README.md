@@ -95,10 +95,10 @@ pip install click rich httpx websockets
 
 ```bash
 # С нового ПК - проверить, что сервер доступен
-curl https://cold-words-rescue.loca.lt/health
+curl https://giant-crews-jog.loca.lt/health
 
 # Или через CLI (если установлен как пакет)
-coding-agent server status --server https://cold-words-rescue.loca.lt
+coding-agent server status --server https://giant-crews-jog.loca.lt
 ```
 
 #### Шаг 4: Создание GitHub токена на новом ПК
@@ -119,13 +119,13 @@ export GITHUB_TOKEN=ghp_your_token_here
 ```bash
 # Указать сервер при запуске
 coding-agent run \
-  --server https://your-server.com \
-  --repo owner/repo \
+    --server https://giant-crews-jog.loca.lt \
+    --repo owner/repo \
   --issue 123 \
   --token ghp_your_token_here
 
 # Или настроить сервер по умолчанию
-coding-agent config add-server mycloud https://your-server.com --set-default
+coding-agent config add-server mycloud https://giant-crews-jog.loca.lt --set-default
 
 # Теперь можно запускать короче
 coding-agent run --repo owner/repo --issue 123 --token ghp_your_token_here

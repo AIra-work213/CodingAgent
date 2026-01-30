@@ -62,8 +62,8 @@ class CodeAgentState(TypedDict):
 
 
 def parse_issue_node(state: CodeAgentState) -> CodeAgentState:
-    """Parse the GitHub Issue to extract requirements"""
-    print(f"[Code Agent] Parsing Issue #{state['issue_number']}")
+    """Парсит Issue для получения требований по задаче"""
+    print(f"[Code Agent] Парсинг Issue #{state['issue_number']}")
 
     try:
         # Get issue context from GitHub
@@ -96,12 +96,12 @@ def parse_issue_node(state: CodeAgentState) -> CodeAgentState:
         state["issue"] = issue_context
         state["status"] = "analyzing"
         state["messages"] = [
-            SystemMessage(content="I am parsing the issue to understand requirements."),
+            SystemMessage(content="Я занимаюсь парсингом issue для получения требований к задаче"),
             HumanMessage(content=issue_context),
         ]
 
         print(
-            f"[Code Agent] Parsed requirements: {requirements.get('type', 'unknown')} - {requirements.get('title', 'no title')}"
+            f"[Code Agent] Полученная информация: {requirements.get('type', 'unknown')} - {requirements.get('title', 'no title')}"
         )
 
     except Exception as e:
@@ -113,8 +113,8 @@ def parse_issue_node(state: CodeAgentState) -> CodeAgentState:
 
 
 def analyze_requirements_node(state: CodeAgentState) -> CodeAgentState:
-    """Analyze requirements and create implementation plan"""
-    print("[Code Agent] Analyzing requirements and creating implementation plan")
+    """Анализ информации и создание плана разработки"""
+    print("[Code Agent] Анализ информации и создание плана разработки")
 
     try:
         # Get repository context

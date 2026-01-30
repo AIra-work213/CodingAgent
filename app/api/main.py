@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.api import tasks
+from app.api.monitoring import router as monitoring_router
 from app.api.streaming import router as streaming_router
 from app.api.websocket import manager
 from app.core.agents.code_agent import run_code_agent
@@ -126,6 +127,7 @@ app.add_middleware(
 
 # Подключение роутеров
 app.include_router(tasks.router)
+app.include_router(monitoring_router)
 app.include_router(streaming_router)
 
 

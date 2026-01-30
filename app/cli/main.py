@@ -840,3 +840,321 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# ============================================================================
+# Monitoring Commands
+# ============================================================================
+
+
+@cli.group()
+def monitor() -> None:
+    """Repository monitoring commands"""
+    pass
+
+
+@monitor.command("add")
+@click.argument("owner")
+@click.argument("repo")
+@click.option(
+    "--token",
+    "-t",
+    "github_token",
+    required=True,
+    help="GitHub token for repository access",
+)
+@click.option(
+    "--interval",
+    "-i",
+    "poll_interval",
+    default=60,
+    type=int,
+    help="Poll interval in seconds (default: 60)",
+)
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_add(
+    ctx: click.Context,
+    owner: str,
+    repo: str,
+    github_token: str,
+    poll_interval: int,
+    server: str | None,
+) -> None:
+    """Add repository to monitoring.
+
+    Example: coding-agent monitor add facebook react --token ghp_xxx
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.post(
+            f"{server_url}/monitoring/repos",
+            json={
+                "owner": owner,
+                "repo": repo,
+                "github_token": github_token,
+                "poll_interval": poll_interval,
+            },
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        result = response.json()
+
+        rprint(
+            Panel.fit(
+                f"[bold green]✓ Repository added to monitoring[/bold green]\n\n"
+                f"Repository: {owner}/{repo}\n"
+                f"Poll Interval: {poll_interval}s\n"
+                f"Server: {server_url}"
+            )
+        )
+
+    except httpx.HTTPStatusError as e:
+        rprint(f"[red]Error: {e.response.json().get('detail', e)}[/red]")
+        raise click.ClickException(str(e))
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+
+@monitor.command("remove")
+@click.argument("owner")
+@click.argument("repo")
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_remove(
+    ctx: click.Context,
+    owner: str,
+    repo: str,
+    server: str | None,
+) -> None:
+    """Remove repository from monitoring.
+
+    Example: coding-agent monitor remove facebook react
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.delete(
+            f"{server_url}/monitoring/repos/{owner}/{repo}",
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        rprint(
+            Panel.fit(
+                f"[bold green]✓ Repository removed from monitoring[/bold green]\n\n"
+                f"Repository: {owner}/{repo}"
+            )
+        )
+
+    except httpx.HTTPStatusError as e:
+        rprint(f"[red]Error: {e.response.json().get('detail', e)}[/red]")
+        raise click.ClickException(str(e))
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+
+@monitor.command("list")
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_list(
+    ctx: click.Context,
+    server: str | None,
+) -> None:
+    """List all monitored repositories.
+
+    Example: coding-agent monitor list
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.get(
+            f"{server_url}/monitoring/repos",
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        repos = response.json()
+
+        if not repos:
+            rprint("[dim]No monitored repositories[/dim]")
+            return
+
+        table = Table(title="Monitored Repositories")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Enabled", style="green")
+        table.add_column("Interval", style="yellow")
+        table.add_column("Last Checked", style="blue")
+        table.add_column("Processed Issues", style="white")
+
+        for r in repos:
+            table.add_row(
+                r["repo"],
+                "✓" if r["enabled"] else "✗",
+                f"{r['poll_interval']}s",
+                r["last_checked"][:19] if r["last_checked"] else "Never",
+                str(r["processed_issues_count"]),
+            )
+
+        console.print(table)
+        rprint(f"\n[dim]Total: {len(repos)} repositories[/dim]")
+
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+
+@monitor.command("status")
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_status(
+    ctx: click.Context,
+    server: str | None,
+) -> None:
+    """Show monitoring status.
+
+    Example: coding-agent monitor status
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.get(
+            f"{server_url}/monitoring/status",
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        status_data = response.json()
+
+        status_color = "green" if status_data["running"] else "yellow"
+        status_text = "Running" if status_data["running"] else "Stopped"
+
+        rprint(
+            Panel.fit(
+                f"[bold {status_color}]Monitoring Status: {status_text}[/bold {status_color}]\n\n"
+                f"Repositories: {status_data['repos_count']}\n"
+                f"Server: {server_url}"
+            )
+        )
+
+        # Show repos if any
+        if status_data.get("repos"):
+            rprint("\n[bold]Repositories:[/bold]")
+            for r in status_data["repos"]:
+                rprint(f"  [cyan]{r['repo']}[/cyan]: {r['processed_issues']} issues processed")
+
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+
+@monitor.command("start")
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_start(
+    ctx: click.Context,
+    server: str | None,
+) -> None:
+    """Start repository monitoring.
+
+    Example: coding-agent monitor start
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.post(
+            f"{server_url}/monitoring/start",
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        result = response.json()
+
+        rprint(
+            Panel.fit(
+                f"[bold green]✓ Monitoring started[/bold green]\n\n{result.get('message', '')}"
+            )
+        )
+
+    except httpx.HTTPStatusError as e:
+        rprint(f"[red]Error: {e.response.json().get('detail', e)}[/red]")
+        raise click.ClickException(str(e))
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+
+@monitor.command("stop")
+@click.option(
+    "--server",
+    "-s",
+    help="Server URL",
+)
+@click.pass_context
+def monitor_stop(
+    ctx: click.Context,
+    server: str | None,
+) -> None:
+    """Stop repository monitoring.
+
+    Example: coding-agent monitor stop
+    """
+    import httpx
+
+    server_url = server or ctx.obj.get("server", discover_server())
+
+    try:
+        response = httpx.post(
+            f"{server_url}/monitoring/stop",
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
+        result = response.json()
+
+        rprint(
+            Panel.fit(
+                f"[bold yellow]⏸ Monitoring stopped[/bold yellow]\n\n{result.get('message', '')}"
+            )
+        )
+
+    except httpx.HTTPStatusError as e:
+        rprint(f"[red]Error: {e.response.json().get('detail', e)}[/red]")
+        raise click.ClickException(str(e))
+    except Exception as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
