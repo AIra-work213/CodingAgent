@@ -1,17 +1,116 @@
 # Coding Agents SDLC Pipeline
 
-Полностью автономная система автоматизации разработки ПО на основе агентов для GitHub, созданная с помощью LangGraph, LangChain и OpenRouter.
+> Полностью автономная система автоматизации разработки ПО на основе агентов для GitHub, созданная с помощью LangGraph, LangChain и OpenRouter.
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.1+-orange.svg)](https://langchain.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-workflow-purple.svg)](https://langchain-ai.github.io/langgraph/)
 
-## 🚀 Быстрый старт
+---
 
-### Сценарий 1: Удалённый сервер + новый ПК (самый частый)
+## Что это такое?
 
-> **У вас есть:** VPS/облачный сервер + совершенно новый ПК
-> **Хотите:** Работать с агентом удалённо, устанавливая минимум на ПК
+Coding Agent — это AI-система, которая автоматически:
+- Читает GitHub Issues
+- Анализирует требования
+- Генерирует код
+- Создаёт Pull Requests
+- Проводит code review
+- Обрабатывает feedback
+
+**Демо-сервер:** https://slow-mammals-shout.loca.lt
+
+---
+
+## Возможности системы
+
+### Code Agent
+Автоматическая генерация кода из GitHub Issues:
+
+```
+Issue → Парсинг → Анализ требований → Генерация кода → Валидация → PR → Итерации по feedback
+```
+
+- Извлечение структурированных требований
+- Анализ текущей кодовой базы
+- Генерация кода с помощью LLM
+- Создание branch и PR
+- Многоитерационная обработка feedback (до 5 итераций)
+
+### Reviewer Agent
+Автоматический анализ Pull Requests:
+
+```
+PR → Анализ diff → Проверка CI → Code Review → Approval/Request Changes
+```
+
+- Анализ code diff
+- Проверка CI/CD результатов
+- Сравнение с требованиями Issue
+- Генерация комментариев review
+- Авто-approve при успехе
+
+### Мониторинг репозиториев
+Автоматическое отслеживание новых issues:
+
+```bash
+# Добавить репозиторий на мониторинг
+coding-agent monitor add owner repo --token ghp_xxx
+
+# Запустить мониторинг
+coding-agent monitor start
+```
+
+- Отслеживание новых issues каждые N секунд
+- Автоматический запуск Code Agent
+- Создание PR без ручного вмешательства
+
+### Live Dashboard
+Real-time отображение прогресса:
+
+```
+┌─ Task #7b4f2d1 ─ Fix User Authentication ───────────────┐
+│ Status: [Iteration 2/5] Reviewing PR... ████████░░ 75% │
+├────────────────────────────────────────────────────────┤
+│ Progress:    ██████████░░░░░░░░░░ 45%                   │
+│ Time:        00:08:23                    PR: #23 [OPEN] │
+│ Files:       3 modified (auth.py +18-5, tests +12)      │
+│ Feedback:    "Add JWT expiry validation" [reviewer]     │
+└── [R]etry [S]top [D]iff [L]ogs [Q]uit ──────────────────┘
+```
+
+---
+
+## Быстрый старт
+
+### Сценарий 1: Использование демо-сервера (самый быстрый)
+
+> Вами нужен только Python и GitHub токен
+
+```bash
+# 1. Установить зависимости CLI
+pip install click rich httpx websockets
+
+# 2. Создать GitHub Personal Access Token
+# https://github.com/settings/tokens
+# Права: repo (full control)
+
+# 3. Запустить агент на демо-сервере
+coding-agent run \
+  --server https://slow-mammals-shout.loca.lt \
+  --repo owner/repo \
+  --issue 123 \
+  --token ghp_your_token_here
+```
+
+**Готово!** Агент работает на удалённом сервере, вы управляете им через CLI.
+
+---
+
+### Сценарий 2: Удалённый сервер + новый ПК
+
+> У вас есть VPS/облачный сервер + совершенно новый ПК
 
 #### Шаг 1: Настройка сервера (один раз)
 
@@ -78,9 +177,6 @@ python3 --version  # должно быть 3.12 или выше
 
 # Установить зависимости CLI
 pip3 install click rich httpx websockets
-
-# Или установить CLI как пакет (если доступно)
-pip3 install coding-agents-cli
 ```
 
 **Windows:**
@@ -91,17 +187,7 @@ pip3 install coding-agents-cli
 pip install click rich httpx websockets
 ```
 
-#### Шаг 3: Проверка подключения
-
-```bash
-# С нового ПК - проверить, что сервер доступен
-curl https://giant-crews-jog.loca.lt/health
-
-# Или через CLI (если установлен как пакет)
-coding-agent server status --server https://giant-crews-jog.loca.lt
-```
-
-#### Шаг 4: Создание GitHub токена на новом ПК
+#### Шаг 3: Создание GitHub токена на новом ПК
 
 ```bash
 # Создать Personal Access Token на GitHub:
@@ -110,32 +196,28 @@ coding-agent server status --server https://giant-crews-jog.loca.lt
 
 # Сохранить токен в переменной окружения
 export GITHUB_TOKEN=ghp_your_token_here
-
-# Или использовать --token в каждом вызове
 ```
 
-#### Шаг 5: Запуск агента с нового ПК
+#### Шаг 4: Запуск агента с нового ПК
 
 ```bash
 # Указать сервер при запуске
 coding-agent run \
-    --server https://giant-crews-jog.loca.lt \
-    --repo owner/repo \
+  --server https://your-server-url.loca.lt \
+  --repo owner/repo \
   --issue 123 \
   --token ghp_your_token_here
 
 # Или настроить сервер по умолчанию
-coding-agent config add-server mycloud https://giant-crews-jog.loca.lt --set-default
+coding-agent config add-server mycloud https://your-server-url.loca.lt --set-default
 
 # Теперь можно запускать короче
 coding-agent run --repo owner/repo --issue 123 --token ghp_your_token_here
 ```
 
-**Готово!** Агент работает на сервере, а вы управляете им с нового ПК.
-
 ---
 
-### Сценарий 2: Локальный запуск (на своём ПК)
+### Сценарий 3: Локальный запуск
 
 #### Требования
 
@@ -146,7 +228,7 @@ coding-agent run --repo owner/repo --issue 123 --token ghp_your_token_here
 #### 1. Клонирование и настройка
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/AIra-work213/CodingAgent
 cd CodingAgent
 
 # Создать файл конфигурации
@@ -182,144 +264,62 @@ docker-compose ps
 docker-compose logs -f api
 ```
 
-#### 4. Использование CLI
+---
 
-```bash
-# Запуск Code Agent для Issue
-docker-compose exec api python -m app.cli code-agent 123
-
-# Запуск Reviewer Agent для PR
-docker-compose exec api python -m app.cli reviewer 456
-
-# Просмотр деталей Issue
-docker-compose exec api python -m app.cli show-issue 123
-```
-
-## 📋 Функциональность
-
-### Code Agent
-
-Автоматически обрабатывает GitHub Issues и создаёт Pull Requests:
-
-```
-Issue → Парсинг → Анализ → Генерация кода → Валидация → PR → Обработка feedback
-```
-
-**Возможности:**
-- Извлечение структурированных требований из Issue
-- Анализ текущей кодовой базы
-- Генерация кода с помощью LLM
-- Создание branch и PR
-- Многоитерационная обработка feedback
-
-### Reviewer Agent
-
-Автоматически анализирует Pull Requests:
-
-```
-PR → Анализ diff → Проверка CI → Code Review → Approval/Request Changes
-```
-
-**Возможности:**
-- Анализ code diff
-- Проверка CI/CD результатов
-- Сравнение с требованиями Issue
-- Генерация комментариев review
-- Авто-approve при успехе
-
-## 🏗 Архитектура
-
-```
-app/
-├── core/                      # Основные модули
-│   ├── agents/                # LangGraph workflows
-│   │   ├── code_agent.py      # Code Agent workflow
-│   │   └── reviewer_agent.py  # Reviewer Agent workflow
-│   ├── tools/                 # LangChain tools
-│   │   └── github_tools.py    # GitHub API инструменты
-│   ├── llm/                   # OpenRouter integration
-│   │   ├── openrouter.py      # LLM клиент
-│   │   └── prompts.py         # Шаблоны промптов
-│   ├── models/                # Pydantic модели
-│   │   └── task.py            # Модели задач
-│   ├── config.py              # Конфигурация
-│   └── task_manager.py        # Менеджер задач (Redis)
-├── api/                       # FastAPI endpoints
-│   ├── main.py                # Приложение FastAPI
-│   ├── tasks.py               # Эндпоинты задач
-│   ├── websocket.py           # WebSocket handler
-│   └── streaming.py           # SSE streaming
-├── cli/                       # CLI интерфейс
-│   ├── main.py                # Click команды
-│   ├── dashboard.py           # Rich Live Dashboard
-│   ├── config.py              # Управление конфигурацией
-│   └── utils.py               # Вспомогательные функции
-└── workflows/                 # Дополнительные workflows
-```
-
-## 🔧 API Endpoints
-
-Запустите сервис и откройте http://localhost:8000/docs для интерактивной документации Swagger.
-
-### Создание задачи
-
-```bash
-POST /tasks
-Content-Type: application/json
-
-{
-    "type": "code-agent",
-    "issue_number": 123,
-    "branch_name": "agent/issue-123",
-    "max_iterations": 5
-}
-```
-
-### Получение задачи
-
-```bash
-GET /tasks/{task_id}
-```
-
-### Потоковая передача логов (SSE)
-
-```bash
-GET /tasks/{task_id}/logs/stream
-```
-
-### WebSocket подключение
-
-```bash
-WS /ws/tasks/{task_id}
-```
-
-## 💻 CLI Команды
+## CLI Команды
 
 ### Основные команды
 
 ```bash
-# Локальный запуск (токен используется из .env на сервере)
+# Запуск Code Agent для Issue с Live Dashboard
 coding-agent run --repo owner/repo --issue 123
 
-# Удалённый запуск с указанием GitHub токена
-# Токен передаётся на сервер и используется только для этой задачи
-coding-agent run \
-  --server https://my-agent.example.com \
-  --repo owner/repo \
-  --issue 123 \
-  --token ghp_xxx
+# С указанием сервера
+coding-agent run --server https://slow-mammals-shout.loca.lt --repo owner/repo --issue 123
+
+# С GitHub токеном
+coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
 
 # Короткая форма
-coding-agent run -s https://my-agent.com -r owner/repo -i 123 -t ghp_xxx
+coding-agent run -s https://server.com -r owner/repo -i 123 -t ghp_xxx
+```
 
-# Использование переменной окружения для токена
-export GITHUB_TOKEN=ghp_xxx
-coding-agent run --server https://my-agent.com --repo owner/repo --issue 123
+### Управление задачами
 
-# Использование сохранённого сервера из конфигурации
-coding-agent config add-server mycloud https://my-agent.example.com
-coding-agent config set-default mycloud
-coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
+```bash
+# Список всех задач
+coding-agent tasks
+
+# Только активные
+coding-agent tasks --active-only
+
+# Статус конкретной задачи
+coding-agent status abc123-def456
+
+# Логи задачи
+coding-agent logs abc123-def456
+
+# Diff изменений
+coding-agent diff abc123-def456
+
+# Остановить задачу
+coding-agent stop abc123-def456
+```
+
+### Команды сервера
+
+```bash
+# Запустить сервер
+coding-agent server start
+
+# Проверить статус сервера
+coding-agent server status
+
+# С другим портом
+coding-agent server start -p 8080
+
+# С auto-reload (для разработки)
+coding-agent server start --reload
 ```
 
 ### Команды конфигурации
@@ -332,39 +332,211 @@ coding-agent config add-server mycloud https://api.example.com --set-default
 coding-agent config set-default mycloud
 
 # Добавить GitHub токен для сервера
-coding-agent config add-token https://api.example.com ghp_xxx
+coding-agent config add-token https://slow-mammals-shout.loca.lt ghp_xxx
 
 # Показать все конфигурации
+coding-agent config list
+
+# С отображением токенов
 coding-agent config list --show-tokens
+
+# Удалить сервер
+coding-agent config remove-server mycloud
+
+# Удалить токен
+coding-agent config remove-token https://api.example.com
 ```
 
-### Команды сервера
+### Команды мониторинга
 
 ```bash
-# Запустить сервер
-coding-agent server start
+# Добавить репозиторий на мониторинг
+coding-agent monitor add owner repo --token ghp_xxx
 
-# Проверить статус сервера
-coding-agent server status
+# С кастомным интервалом
+coding-agent monitor add owner repo --token ghp_xxx --interval 120
 
-# Проверить health endpoint
-coding-agent server health
+# Запустить мониторинг
+coding-agent monitor start
+
+# Проверить статус
+coding-agent monitor status
+
+# Список отслеживаемых репозиториев
+coding-agent monitor list
+
+# Удалить репозиторий
+coding-agent monitor remove owner repo
+
+# Остановить мониторинг
+coding-agent monitor stop
 ```
 
-## 🔄 GitHub Actions (опционально)
+---
 
-### Автоматический запуск
+## API Endpoints
 
-**Code Agent** запускается при создании Issue с лейблом `agent-task`.
+Запустите сервис и откройте http://localhost:8000/docs для интерактивной документации Swagger.
 
-**Reviewer Agent** запускается при создании или обновлении Pull Request.
+### Tasks
 
-### Workflows
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| POST | `/tasks` | Создать задачу |
+| GET | `/tasks` | Список задач |
+| GET | `/tasks/{task_id}` | Детали задачи |
+| DELETE | `/tasks/{task_id}` | Отменить задачу |
+| GET | `/tasks/{task_id}/logs` | Логи задачи |
+| GET | `/tasks/{task_id}/diff` | Diff изменений |
 
-- `.github/workflows/code-agent.yml` - Запуск Code Agent
-- `.github/workflows/reviewer-agent.yml` - Запуск Reviewer Agent
+### Monitoring
 
-## 🧪 Локальная разработка
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| POST | `/monitoring/repos` | Добавить репозиторий |
+| GET | `/monitoring/repos` | Список репозиториев |
+| DELETE | `/monitoring/repos/{owner}/{repo}` | Удалить репозиторий |
+| GET | `/monitoring/status` | Статус мониторинга |
+| POST | `/monitoring/start` | Запустить мониторинг |
+| POST | `/monitoring/stop` | Остановить мониторинг |
+
+### Streaming
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| GET | `/tasks/{task_id}/logs/stream` | SSE логи |
+| WS | `/ws/tasks/{task_id}` | WebSocket |
+
+### Health
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| GET | `/health` | Проверка работоспособности |
+| GET | `/tasks/stats/summary` | Статистика задач |
+
+---
+
+## Удалённое использование
+
+### Auto-discover сервера
+
+CLI автоматически определяет сервер в следующем порядке:
+
+1. `--server` опция
+2. `CODING_AGENT_SERVER` переменная окружения
+3. `~/.coding-agent/config.json` → `default_server`
+4. `http://localhost:8000` (проверка health)
+
+### Способы подключения
+
+#### Через переменную окружения
+
+```bash
+export CODING_AGENT_SERVER=https://slow-mammals-shout.loca.lt
+coding-agent run --repo owner/repo --issue 123
+```
+
+#### Через опцию --server
+
+```bash
+coding-agent run -s https://server.com --repo owner/repo --issue 123
+```
+
+#### Через config file
+
+```bash
+# Добавить сервер в конфигурацию
+coding-agent config add-server production https://api.example.com --set-default
+
+# Использовать (автоматически определится)
+coding-agent run --repo owner/repo --issue 123
+```
+
+---
+
+## Живой демо-сервер
+
+**URL:** https://slow-mammals-shout.loca.lt
+
+### Быстрое подключение
+
+```bash
+# Сохранить токен для демо-сервера
+coding-agent config add-token https://slow-mammals-shout.loca.lt ghp_your_token
+
+# Добавить сервер как default
+coding-agent config add-server demo https://slow-mammals-shout.loca.lt --set-default
+
+# Теперь можно запускать без указания сервера
+coding-agent run --repo owner/repo --issue 123
+```
+
+### Health check
+
+```bash
+curl https://slow-mammals-shout.loca.lt/health
+```
+
+---
+
+## Архитектура
+
+```
+app/
+├── api/
+│   ├── main.py              # FastAPI приложение
+│   ├── tasks.py             # Эндпоинты задач
+│   ├── monitoring.py        # Эндпоинты мониторинга
+│   ├── websocket.py         # WebSocket обработчики
+│   └── streaming.py         # SSE streaming
+├── cli/
+│   ├── main.py              # CLI команды
+│   ├── dashboard.py         # Live dashboard
+│   ├── config.py            # Управление конфигурацией
+│   └── utils.py             # CLI утилиты
+├── core/
+│   ├── monitoring.py        # Модуль мониторинга
+│   ├── agents/
+│   │   ├── code_agent.py    # Code Agent workflow
+│   │   └── reviewer_agent.py # Reviewer workflow
+│   ├── llm/
+│   │   ├── openrouter.py    # OpenRouter клиент
+│   │   └── prompts.py       # Промпты
+│   ├── tools/
+│   │   └── github_tools.py  # LangChain инструменты
+│   └── task_manager.py      # Управление задачами
+```
+
+---
+
+## Переменные окружения
+
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| `OPENROUTER_API_KEY` | API ключ OpenRouter | - |
+| `GITHUB_TOKEN` | GitHub токен | - |
+| `GITHUB_REPO` | Репозиторий (owner/repo) | - |
+| `REDIS_URL` | URL Redis | redis://redis:6379/0 |
+| `MAX_ITERATIONS` | Макс. итераций | 5 |
+| `DEFAULT_MODEL` | Модель LLM | qwen/qwen-2.5-coder-32b-instruct |
+| `CODING_AGENT_SERVER` | URL сервера по умолчанию | http://localhost:8000 |
+
+---
+
+## Поддерживаемые модели
+
+| Модель | Использование | Статус |
+|--------|---------------|--------|
+| `qwen/qwen-2.5-coder-32b-instruct` | Coding, Planning | ✅ |
+| `google/gemini-flash-1.5` | Review | ✅ |
+| `deepseek/deepseek-coder` | Coding (backup) | ✅ |
+| `meta-llama/llama-3-70b-instruct` | Качественные задачи | ✅ |
+
+Все модели доступны **бесплатно** через OpenRouter.
+
+---
+
+## Локальная разработка
 
 ```bash
 # Создать виртуальное окружение
@@ -386,110 +558,9 @@ mypy app/
 pytest tests/ -v --cov=app
 ```
 
-## 🌐 Удалённое использование
+---
 
-### Развертывание сервера в облаке
-
-```bash
-# На VPS или в облаке
-git clone <repo>
-cd CodingAgent
-cp .env.example .env
-# Настроить .env с вашими ключами
-
-docker-compose up -d
-```
-
-### Подключение с любого компьютера
-
-```bash
-# Настройка удалённого сервера (один раз)
-coding-agent config add-server mycloud https://my-agent.example.com --set-default
-
-# Теперь можно запускать агента из любого места!
-# GitHub токен передаётся при каждом вызове (безопасно)
-coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
-
-# Или использовать переменную окружения
-export GITHUB_TOKEN=ghp_xxx
-coding-agent run --repo owner/repo --issue 123
-```
-
-### 🔐 Безопасность GitHub токенов
-
-**Рекомендуемый подход для удалённых серверов:**
-
-1. **Не хранить** GitHub токены на сервере в `.env`
-2. **Передавать токен** при каждом вызове через `--token`
-3. **Использовать переменную окружения** `GITHUB_TOKEN` локально
-
-Токен передаётся на сервер по HTTPS и используется только для конкретной задачи.
-
-### Через переменную окружения
-
-```bash
-# Указать сервер напрямую
-export CODING_AGENT_SERVER=https://my-agent.example.com
-coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
-```
-
-### Использование с localtunnel (для тестирования)
-
-**Localtunnel - это бесплатный сервис туннелирования без регистрации:**
-
-```bash
-# На сервере - установка localtunnel (один раз)
-npm install -g localtunnel
-
-# Запуск tunnel
-lt --port 8000
-# Получите URL: https://random-name.loca.lt
-
-# На клиенте
-export CODING_AGENT_SERVER=https://random-name.loca.lt
-coding-agent run --repo owner/repo --issue 123 --token ghp_xxx
-```
-
-**Преимущества localtunnel:**
-- ✅ Полностью бесплатный
-- ✅ Не требует регистрации
-- ✅ Мгновенный старт
-- ✅ Поддержка WebSocket
-- ✅ Автоматический HTTPS
-
-### Использование с ngrok (альтернатива)
-
-```bash
-# На сервере
-ngrok http 8000
-# Получите URL: https://abc123.ngrok.io
-
-# На клиенте
-coding-agent run --server https://abc123.ngrok.io --repo owner/repo --issue 123
-```
-
-## 📊 Мониторинг
-
-### Health Check
-
-```bash
-curl http://localhost:8000/health
-```
-
-### Статистика задач
-
-```bash
-curl http://localhost:8000/tasks/stats/summary
-```
-
-### Статус сервисов
-
-```bash
-docker-compose ps
-docker-compose logs -f
-```
-
-## 🔐 Безопасность
+## Безопасность
 
 ### GitHub токены
 
@@ -509,57 +580,42 @@ coding-agent run --server https://agent.example.com --repo owner/repo --issue 12
 
 ### Рекомендации
 
-- ✅ Используйте GitHub App вместо Personal Token для production
-- ✅ Храните секреты в GitHub Secrets или vault
-- ✅ Включите HTTPS для webhook endpoints
-- ✅ Настройте rate limiting для API
-- ⚠️ Не передавайте токены через небезопасные каналы
-- ⚠️ Используйте минимальные права токена (scope)
-
-## ⚙️ Конфигурация
-docker-compose ps
-docker-compose logs -f
-```
-
-## 🔐 Безопасность
-
 - Используйте GitHub App вместо Personal Token для production
 - Храните секреты в GitHub Secrets или vault
-- Включите rate limiting для API
-- Используйте HTTPS для webhook endpoints
+- Включите HTTPS для webhook endpoints
+- Настройте rate limiting для API
+- Используйте минимальные права токена (scope)
 
-## ⚙️ Конфигурация
+---
 
-| Переменная | Описание | По умолчанию |
-|------------|----------|--------------|
-| `OPENROUTER_API_KEY` | API ключ OpenRouter | - |
-| `GITHUB_TOKEN` | GitHub токен | - |
-| `GITHUB_REPO` | Репозиторий (owner/repo) | - |
-| `REDIS_URL` | URL Redis | redis://redis:6379/0 |
-| `MAX_ITERATIONS` | Макс. итераций | 5 |
-| `DEFAULT_MODEL` | Модель LLM | gpt-4o-mini |
+## Статус системы
 
-## 📝 Поддерживаемые модели
+**Версия:** v0.1.0 (2026-01-30)
 
-- `gpt-4o-mini` - Основная модель (баланс)
-- `qwen-2.5-coder` - Для генерации кода
-- `deepseek-coder` - Альтернатива для кода
+### Протестированные компоненты
 
-## 🤝 Участие в разработке
+| Компонент | Статус |
+|-----------|--------|
+| CLI команды | ✅ |
+| Code Agent | ✅ |
+| Reviewer Agent | ✅ |
+| Мониторинг | ✅ |
+| API сервер | ✅ |
+| WebSocket | ✅ |
+| Remote сервер | ✅ |
 
-1. Fork репозитория
-2. Создайте feature branch
-3. Commit изменения
-4. Push в branch
-5. Создайте Pull Request
+---
 
-## 📄 Лицензия
+## Лицензия
 
 MIT License
 
-## 🔗 Полезные ссылки
+---
+
+## Полезные ссылки
 
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [OpenRouter](https://openrouter.ai/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Rich CLI](https://rich.readthedocs.io/)
+- GitHub: https://github.com/AIra-work213/CodingAgent

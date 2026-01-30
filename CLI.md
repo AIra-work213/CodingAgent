@@ -77,7 +77,7 @@ coding-agent run --repo owner/repo --issue 42 --branch feature/auth
 coding-agent run -r owner/repo -i 42 -t ghp_xxxxxxxxxxxx
 
 # С удаленным сервером
-coding-agent run -s https://api.example.com -r owner/repo -i 42
+coding-agent run -s https://slow-mammals-shout.loca.lt -r owner/repo -i 42
 
 # С увеличенным количеством итераций
 coding-agent run -r owner/repo -i 42 -m 10
@@ -356,7 +356,7 @@ coding-agent config list --show-tokens
 Добавляет сервер в конфигурацию.
 
 ```bash
-coding-agent config add-server <name> <url> [options]
+coding-agent config add-server maincloud https://slow-mammals-shout.loca.lt --set-default
 ```
 
 | Аргумент | Описание |
@@ -426,7 +426,7 @@ coding-agent config set-default production
 Сохраняет GitHub токен для сервера.
 
 ```bash
-coding-agent config add-token <server_url> <token>
+coding-agent config add-token https://slow-mammals-shout.loca.lt ghp_xxx
 ```
 
 | Аргумент | Описание |
